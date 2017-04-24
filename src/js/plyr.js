@@ -472,15 +472,19 @@
     function _on(element, events, callback, useCapture) {
         if (element) {
             _toggleListener(element, events, callback, true, useCapture);
+            return true;
         }
+        return false;
     }
 
     // Unbind event
-    /*function _off(element, events, callback, useCapture) {
+    function _off(element, events, callback, useCapture) {
         if (element) {
             _toggleListener(element, events, callback, false, useCapture);
+            return true;
         }
-    }*/
+        return false;
+    }
 
     // Trigger event
     function _event(element, type, bubbles, properties) {
@@ -712,8 +716,10 @@
     // Player instance
     function Plyr(media, config) {
         var plyr = this,
-        timers = {},
-        api;
+            timers = {},
+            api,
+            listeners = [];
+
 
         // Set media
         plyr.media = media;
@@ -743,6 +749,97 @@
 
         // Log config options
         _log('Config', config);
+
+        // Toggle event listeners
+        function _toggleListeners(element, events, callback, toggle, useCapture) {
+            var eventList = events.split(' ');
+
+            // Whether the listener is a capturing listener or not
+            // Default to false
+            if (!_is.boolean(useCapture)) {
+                useCapture = false;
+            }
+
+            // If a nodelist is passed, call itself on each node
+            if (element instanceof NodeList) {
+                for (var x = 0; x < element.length; x++) {
+                    if (element[x] instanceof Node) {
+                        _toggleListeners(element[x], arguments[1], arguments[2], arguments[3]);
+                    }
+                }
+                return;
+            }
+
+            // If a single node is passed, bind the event listener
+            for (var i = 0; i < eventList.length; i++) {
+                _toggleListener(element, eventList[i], callback, toggle, useCapture);
+            }
+        }
+
+        // Toggle event listener
+        function _toggleListener(element, event, callback, toggle, useCapture) {
+            if (toggle) {
+                element.addEventListener(event, callback, useCapture);
+                listeners.push({
+                    element: element,
+                    event: event,
+                    callback: callback,
+                    useCapture: useCapture
+                });
+            } else {
+                element.removeEventListener(event, callback, useCapture);
+                var i = _indexOfListener(event, callback, useCapture);
+                if (i !== -1) {
+                    listeners.splice(i, 1);
+                }
+            }
+        }
+
+        // Return index of event listener in array.
+        function _indexOfListener(element, event, callback, useCapture) {
+            var e,
+                i;
+
+            for (i = listeners.length; i--;) {
+                e = listeners[i];
+                if (e.element === element && e.event === event && e.callback === callback && e.useCapture === useCapture) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        // Bind event
+        function _on(element, events, callback, useCapture) {
+            if (element) {
+                _toggleListeners(element, events, callback, true, useCapture);
+                return true;
+            }
+            return false;
+        }
+
+        // Unbind event
+        function _off(element, events, callback, useCapture) {
+            if (element) {
+                _toggleListeners(element, events, callback, false, useCapture);
+                return true;
+            }
+            return false;
+        }
+
+        // Unbind all events
+        function _allOff() {
+            var e,
+                i;
+
+            for (i = listeners.length; i--;) {
+                e = listeners[i];
+                e.element.removeEventListener(e.event, e.callback, e.useCapture);
+            }
+
+            listeners = [];
+        }
 
         // Get icon URL
         function _getIconUrl() {
@@ -2860,7 +2957,7 @@
                 if (target) {
                     var hadTabFocus = _hasClass(trigger, config.classes.tabFocus);
 
-                    setTimeout(function() {
+                    timers.focus = setTimeout(function() {
                         target.focus();
 
                         if (hadTabFocus) {
@@ -3270,6 +3367,34 @@
 
                     // Clean up
                     cleanUp();
+
+                    // >>>>>>> MOD: FIX MEMORY LEAKS >>>>>>>
+                    _cancelRequests();
+                    _remove(plyr.media);
+                    _remove(plyr.videoContainer);
+                    _allOff();
+
+                    Object.keys(timers).forEach(function(name) {
+                        clearTimeout(timers[name]);
+                    });
+
+                    plyr.supported = null;
+                    plyr.embed = null;
+                    plyr.browser = null;
+                    plyr.container = null;
+                    plyr.videoContainer = null;
+                    plyr.media = null;
+                    plyr.captions = null;
+                    plyr.currentCaption = null;
+                    plyr.controls = null;
+                    plyr.buttons = null;
+                    plyr.progress = null;
+                    plyr.volume = null;
+                    plyr.duration = null;
+                    plyr.currentTime = null;
+                    plyr.seekTime = null;
+                    plyr = null;
+                    // <<<<<<< MOD: FIX MEMORY LEAKS <<<<<<<
 
                     break;
             }
