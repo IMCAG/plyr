@@ -3368,34 +3368,6 @@
                     // Clean up
                     cleanUp();
 
-                    // >>>>>>> MOD: FIX MEMORY LEAKS >>>>>>>
-                    _cancelRequests();
-                    _remove(plyr.media);
-                    _remove(plyr.videoContainer);
-                    _allOff();
-
-                    Object.keys(timers).forEach(function(name) {
-                        clearTimeout(timers[name]);
-                    });
-
-                    plyr.supported = null;
-                    plyr.embed = null;
-                    plyr.browser = null;
-                    plyr.container = null;
-                    plyr.videoContainer = null;
-                    plyr.media = null;
-                    plyr.captions = null;
-                    plyr.currentCaption = null;
-                    plyr.controls = null;
-                    plyr.buttons = null;
-                    plyr.progress = null;
-                    plyr.volume = null;
-                    plyr.duration = null;
-                    plyr.currentTime = null;
-                    plyr.seekTime = null;
-                    plyr = null;
-                    // <<<<<<< MOD: FIX MEMORY LEAKS <<<<<<<
-
                     break;
             }
 
@@ -3428,6 +3400,34 @@
 
                 // Event
                 _triggerEvent(original, 'destroyed', true);
+
+                // >>>>>>> MOD: FIX MEMORY LEAKS >>>>>>>
+                _cancelRequests();
+                _remove(plyr.media);
+                _remove(plyr.videoContainer);
+                _allOff();
+
+                Object.keys(timers).forEach(function(name) {
+                    clearTimeout(timers[name]);
+                });
+
+                plyr.supported = null;
+                plyr.embed = null;
+                plyr.browser = null;
+                plyr.container = null;
+                plyr.videoContainer = null;
+                plyr.media = null;
+                plyr.captions = null;
+                plyr.currentCaption = null;
+                plyr.controls = null;
+                plyr.buttons = null;
+                plyr.progress = null;
+                plyr.volume = null;
+                plyr.duration = null;
+                plyr.currentTime = null;
+                plyr.seekTime = null;
+                plyr = null;
+                // <<<<<<< MOD: FIX MEMORY LEAKS <<<<<<<
             }
         }
 
