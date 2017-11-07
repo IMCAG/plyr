@@ -3307,15 +3307,26 @@
             }
 
             // Remove child sources
-            var sources = plyr.media.querySelectorAll('source');
-            for (var i = 0; i < sources.length; i++) {
-                _remove(sources[i]);
+            var children = plyr.media.querySelectorAll('source'),
+                i;
+
+            for (i = 0; children && i < children.length; i++) {
+                children[i].setAttribute('src', ''); // .media
+                _remove(children[i]);
+            }
+
+            // Remove tracks
+            children = plyr.media.querySelectorAll('track');
+            for (i = 0; children && i < children.length; i++) {
+                children[i].setAttribute('src', '');
+                _remove(children[i]);
             }
 
             // Set blank video src attribute
             // This is to prevent a MEDIA_ERR_SRC_NOT_SUPPORTED error
             // Info: http://stackoverflow.com/questions/32231579/how-to-properly-dispose-of-an-html5-video-and-close-socket-or-connection
-            plyr.media.setAttribute('src', config.blankUrl);
+            plyr.media.setAttribute('poster', '');
+            plyr.media.setAttribute('src', ''/*config.blankUrl*/);
 
             // Load the new empty source
             // This will cancel existing requests
@@ -3392,20 +3403,12 @@
                 // Remove init flag
                 plyr.init = false;
 
-                // Replace the container with the original element provided
-                plyr.container.parentNode.replaceChild(original, plyr.container);
-
-                // Allow overflow (set on fullscreen)
-                document.body.style.overflow = '';
-
-                // Event
-                _triggerEvent(original, 'destroyed', true);
-
                 // >>>>>>> MOD: FIX MEMORY LEAKS >>>>>>>
+                _allOff();
                 _cancelRequests();
                 _remove(plyr.media);
                 _remove(plyr.videoContainer);
-                _allOff();
+                _remove(plyr.container);
 
                 Object.keys(timers).forEach(function(name) {
                     clearTimeout(timers[name]);
@@ -3428,6 +3431,12 @@
                 plyr.seekTime = null;
                 plyr = null;
                 // <<<<<<< MOD: FIX MEMORY LEAKS <<<<<<<
+
+                // Allow overflow (set on fullscreen)
+                document.body.style.overflow = '';
+
+                // Event
+                _triggerEvent(original, 'destroyed', true);
             }
         }
 
